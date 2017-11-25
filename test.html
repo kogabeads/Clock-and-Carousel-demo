@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title></title>
+	<style type="text/css">
+		*{
+			padding: 0;
+			margin: 0;
+		}
+		li{
+			list-style: none;
+		}
+		img{
+			display: block;
+		}
+		.clockbox{
+			border: 4px solid #ccc;
+			padding: 20px;
+			background: #eee;
+			margin: 50px auto;
+			width: 350px;
+		}
+		.clock{
+			background: #ccc;
+			width: 350px;
+			border-radius: 10px;
+			position: relative;
+		}
+		.weekend{
+			height: 40px;
+		}
+		.weekend span{
+			line-height: 40px;
+			text-align: center;
+			color:#aaa;
+			width: 50px;
+			display: block;
+			float: left;
+		}
+		.weekend .focus{
+			color: #666;
+		}
+		.time span{
+			font-size: 60px;
+			color: #666;
+		}
+		.am,.pm{
+			position: absolute;
+			right:20px;
+		}
+		.am{
+			bottom: 60px;
+		}
+		.pm{
+			bottom: 20px;
+		}
+		.box{
+			width: 500px;
+			height: 300px;
+			margin: 50px auto;
+			border: 10px solid #000;
+		}
+		.imgbox{
+			float: left;
+			border-right: 4px solid #000;
+			width: 166px;
+			overflow: hidden;
+			height: 100%;
+		}
+		.imgbox .ibox{
+			width: 80px;
+			height: 80px;
+			border-right: 3px solid #000;
+			border-bottom: 3px solid #000;
+			float: left;
+			position: relative;
+		}
+		.imgbox .ibox img{
+			width: 100%;
+			height: 100%;
+		}
+		.imgbox .ibox div{
+			position: absolute;
+			width: 100%;
+			height: 100%;
+			background: rgba(255,255,255,0.7);
+		}
+		.imgbox .ibox .current{
+			position: absolute;
+			width: 0;
+			height: 0;
+		}
+		.container{
+			float: left;
+			width: 330px;
+			overflow: hidden;
+			position: relative;
+			height: 100%;
+		}
+		ul{
+			position: absolute;
+		}
+		.container li{
+			float: left;
+			list-style: none;
+			position: relative;
+		}
+		li p {
+			position: absolute;
+			bottom: 0;
+			left: 0;
+		}
+		.container img{
+			width: 100%;
+			height: 100%;
+		}
+		.prev,.next{
+			position: absolute;
+			z-index: 10;
+			cursor: pointer;
+			background: rgba(0,0,0,0.5);
+			right: 20px;
+			top: 10px;
+			color: #fff;
+		}
+		.prev{
+			right: 40px;
+		}
+	</style>	
+</head>
+<body>
+	<div class="clockbox">
+		<div class="clock">
+			<div class="weekend">
+				<span>MON</span>
+				<span>TUE</span>
+				<span>WED</span>
+				<span>THU</span>
+				<span>FRI</span>
+				<span>SAT</span>
+				<span>SUN</span>
+			</div>
+			<div class="time">
+				<span class="hour"></span>
+				<span>:</span>
+				<span class="minute"></span>
+				<span>:</span>
+				<span class="second"></span>
+			</div>
+			<span class="am">AM</span>
+			<span class="pm">PM</span>
+		</div>
+	</div>
+	<div class="box">
+		<div class="imgbox"></div>
+		<div class="container"></div>
+	</div>
+	<!-- Q2 -->
+	<script src="jquery-1.12.4.min.js"></script>
+	<script>
+		function setTime(){
+			var time = new Date(),
+				hour = tolen2(time.getHours()),
+				minute = tolen2(time.getMinutes()),
+				second = tolen2(time.getSeconds()),
+				week = time.getDay();
+			$(".weekend span").removeClass("focus").eq(week).addClass("focus");
+			$(".hour").html(hour);
+			$(".minute").html(minute);
+			$(".second").html(second);
+			$(".am,.pm").css({display:"none"}).eq(Math.floor(hour/12)).css({display:"block"});
+		}
+
+		function tolen2(str){
+			str = str.toString();
+			while(str.length<2){
+				str = "0" + str;
+			}
+			return str;
+		}
+
+		setInterval(setTime,1000);
+		/////////////////////////////////////////////////////////////////////////Q2
+		function Carousel(options){
+			options = options || {};
+			this.container = options.container;
+			this.lcontainer = options.lcontainer;
+			this.url = options.url; //ajax发送的地址
+			this.width = options.width || 330;
+			this.height = options.height || 300;
+			this.imgboxes = null; //存放轮播的图片
+			this.littleimgboxes = null; //存放缩放的图片
+			this.currentIndex = 0;
+			this.nextIndex = 1;
+			this.timer = null;
+			this.init();
+		}
+		Carousel.prototype = {
+			constrctor : Carousel,
+			init : function(){
+				var boxes ,
+					len,
+					that = this;
+				$(this.container).append(boxes)
+				$.getJSON(this.url,function(data){
+					len = data.length;
+					boxes = that.imgboxes = $("<ul></ul>");
+					boxes.css({
+						position: "absolute",
+						width: that.width * (len+2) + "px",
+						height: that.height+ "px",
+						left: -that.width+ "px"
+					})
+					
+					$(that.container).append(boxes);
+					for(let i=0;i<len;i++){
+						$(that.lcontainer).append($("<div class='ibox'><div></div><img src='"+data[i].src+"'></div>"));
+						boxes.append($("<li style='width:"+that.width+"px;height:"+that.height+"px;'><img src='"+data[i].src+"'><p>"+data[i].mess+"</p></li>"));
+					}
+					var first = boxes.find("li:first").clone(true),
+						last = boxes.find("li:last").clone(true);
+					$(".ibox div:first").addClass('current');
+					that.imgboxes.append(first).prepend(last);
+					that.littleimgboxes = $(".ibox div");
+					console.log(that.littleimgboxes);
+				})
+				$(this.container).append($("<div class='prev'><</div>"));
+				$(this.container).append($("<div class='next'>></div>"));
+				var cb = this.move.bind(this);
+				this.timer = setInterval(cb, 3000);
+				$(".prev").click(function(){
+					that.nextIndex = that.currentIndex - 1;
+					console.log(that.nextIndex);
+					cb();
+				});
+				$(".next").click(function(){
+					cb();
+				});
+			},
+			move : function(){
+				var _left = -1 * (this.nextIndex+1) * this.width ,
+					len = this.littleimgboxes.length,
+					that = this;
+				this.littleimgboxes[(this.currentIndex+len)%len].className = "";
+				this.littleimgboxes[(this.nextIndex+len)%len].className = "current";
+				this.currentIndex = this.nextIndex;
+				this.nextIndex++;
+				if (this.nextIndex > len){  
+					$(this.imgboxes).stop().animate({
+						left : _left
+					},1000,function(){
+						$(that.imgboxes).css({left : - that.width + "px"});
+						that.nextIndex = 1;
+						that.currentIndex = 0;
+					})
+					return;
+				}
+				if (this.nextIndex <= 0){	//第一张往最后一张过渡
+					$(this.imgboxes).stop().animate({
+						left : _left
+					},1000,function(){
+						$(that.imgboxes).css({left : - len * that.width + "px"});
+						that.nextIndex = len;
+						that.currentIndex = len - 1;
+					})
+					return;
+				}
+				$(this.imgboxes).stop().animate({
+					left : _left
+				},1000)
+			}
+		}
+		new Carousel({
+			url : "img.json",
+			container: $(".container")[0],
+			lcontainer: $(".imgbox")[0]
+		})
+	</script>
+</body>
+</html>
